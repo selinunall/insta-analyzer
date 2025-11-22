@@ -1,0 +1,214 @@
+import requests
+import os
+import shutil
+import json
+from zipfile import ZipFile
+
+# İndirilen ZIP dosyasını ve çıkarılan verileri tutacağımız dizin
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(BASE_DIR, 'data')
+
+# Eğer data klasörü yoksa oluştur
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
+
+class DataProcessor:
+    """
+    Instagram indirme linkini işlemek, dosyayı indirmek, açmak ve analiz etmek
+    için merkezi sınıf.
+    """
+    def __init__(self, download_url: str, username: str = "user"):
+        self.download_url = download_url
+        self.username = username
+        # İndirilen dosyanın adını kullanıcı adına ve anlık zamana göre belirleyebiliriz,
+        # ancak basitlik için şimdilik sabit bir isim verelim.
+        self.zip_filename = f"{self.username}_instagram_data.zip"
+        self.zip_path = os.path.join(DATA_DIR, self.zip_filename)
+        self.extraction_path = os.path.join(DATA_DIR, f"{self.username}_extracted_data")
+        
+        # Analiz sonuçlarını tutacak dictionary
+        self.analysis_results = {}
+
+    def download_file(self) -> bool:
+        """
+        URL'den büyük ZIP dosyasını DATA_DIR'a indirir. 
+        Başarılı olursa True, hata oluşursa False döndürür.
+        """
+        print(f"[{self.username}]: İndirme işlemi başlatılıyor: {self.download_url[:50]}...")
+        
+        # 4 MB (1024 * 4) bloklar halinde indirme
+        chunk_size = 1024 * 4
+        try:
+            # stream=True ile büyük dosyaları bellek dostu bir şekilde indiriyoruz
+            with requests.get(self.download_url, stream=True) as r:
+                r.raise_for_status() # HTTP hatalarını yakalar (4xx veya 5xx)
+                
+                # İndirilecek dosya boyutunu al (opsiyonel)
+                total_size = int(r.headers.get('content-length', 0))
+                downloaded_size = 0
+                
+                with open(self.zip_path, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=chunk_size): 
+                        if chunk: # boş chunk'ları filtrele
+                            f.write(chunk)
+                            downloaded_size += len(chunk)
+                            # İlerleme çubuğu simülasyonu için log (opsiyonel)
+                            # print(f"İndiriliyor: {downloaded_size / total_size * 100:.2f}%", end='\r')
+                            
+            print(f"[{self.username}]: Dosya başarıyla indirildi: {self.zip_path}")
+            return True
+            
+        except requests.exceptions.RequestException as e:
+            print(f"[{self.username}]: İndirme sırasında ağ hatası oluştu: {e}")
+            return False
+        except Exception as e:
+            print(f"[{self.username}]: Beklenmedik hata: {e}")
+            return False
+
+    # ----------------------------------------------------
+    # SONRAKİ ADIMLAR İÇİN YER TUTUCULAR
+    # ----------------------------------------------------
+    
+    def unzip_and_extract(self) -> bool:
+        """
+        İndirilen ZIP dosyasını açar.
+        """
+        print(f"[{self.username}]: ZIP dosyasını açma işlemi başlatılıyor...")
+        # Daha önce açılmış klasör varsa temizle (önemli)
+        if os.path.exists(self.extraction_path):
+            shutil.rmtree(self.extraction_path)
+            print(f"[{self.username}]: Eski ayıklama klasörü temizlendi.")
+
+        try:
+            with ZipFile(self.zip_path, 'r') as zip_ref:
+                # Dosyaları extraction_path dizinine çıkar
+                zip_ref.extractall(self.extraction_path)
+            
+            print(f"[{self.username}]: ZIP dosyası başarıyla açıldı: {self.extraction_path}")
+            return True
+
+        except FileNotFoundError:
+            print(f"[{self.username}]: Hata: ZIP dosyası bulunamadı: {self.zip_path}")
+            return False
+        except Exception as e:
+            print(f"[{self.username}]: Ayıklama sırasında beklenmedik hata: {e}")
+            return False
+
+    def _load_json_data(self, relative_path: str) -> list:
+        """
+        Belirtilen göreceli yoldaki JSON dosyasını yükler.
+        Çıkarılan dizinin (self.extraction_path) hemen altında
+        bir tarihli alt klasör olup olmadığını kontrol eder.
+        """
+        
+        # 1. Doğrudan Yolu Dene (connections/followers_and_following/...)
+        full_path = os.path.join(self.extraction_path, relative_path)
+        found_path = None
+
+        # 2. Esnek Yolu Dene (Tarihli ana klasör)
+        if not found_path:
+            content_list = os.listdir(self.extraction_path)
+            sub_dirs = [d for d in content_list if os.path.isdir(os.path.join(self.extraction_path, d))]
+
+            if len(sub_dirs) == 1:
+                single_sub_dir = sub_dirs[0]
+                potential_path = os.path.join(self.extraction_path, single_sub_dir, relative_path)
+                
+                if os.path.exists(potential_path):
+                    found_path = potential_path
+                    print(f"[{self.username}]: KRİTİK BAŞARI: Dosya '{single_sub_dir}' alt klasöründe bulundu.")
+                
+        # 3. Klasör Adlarının Duyarlılığını Dene (Örneğin 'Connections' yerine 'connections' olması)
+        # Eğer hala bulunamadıysa, klasör adlarının küçük harfli olduğunu varsayarak dene.
+        if not found_path:
+            parts = relative_path.split('/')
+            lower_case_path = '/'.join([p.lower() for p in parts])
+            lower_case_full_path = os.path.join(self.extraction_path, lower_case_path)
+
+            if os.path.exists(lower_case_full_path):
+                 found_path = lower_case_full_path
+                 print(f"[{self.username}]: KRİTİK BAŞARI: Dosya küçük harfli yolda bulundu: {lower_case_path}")
+
+        if not found_path:
+            print(f"[{self.username}]: Uyarı: Dosya bulunamadı: {relative_path}")
+            return []
+        
+        # 4. JSON Okuma ve Veri Çıkarma (Önceki mantık)
+        try:
+            with open(found_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data
+
+        except Exception as e:
+            print(f"[{self.username}]: Hata: JSON okunamadı ({found_path}): {e}")
+            return []
+
+
+    def run_analysis(self) -> dict:
+        """
+        Çıkarılan JSON dosyaları üzerinde basit takipçi/takip analizi yapar.
+        """
+        print(f"[{self.username}]: Takipçi/Takip Analizi başlatılıyor...")
+        
+        # 1. Verileri Yükle
+        # NOT: 'followers_1.json' da aynı karmaşık formatta olabilir, bu yüzden _load_json_data yardımcı olur.
+        followers_raw_data = self._load_json_data('connections/followers_and_following/followers_1.json')
+        following_raw_data = self._load_json_data('connections/followers_and_following/following.json')
+        
+        # 2. Kullanıcı Adlarını Çıkartma ve Set Oluşturma
+        # Takipçi listesi: [{'title': 'username', 'string_list_data': [...]}, ...] formatında
+        if 'string_list_data' in followers_raw_data:
+            followers_temp_list = followers_raw_data.get('string_list_data', [])
+            followers_list = {item.get('value') for item in followers_temp_list if item.get('value')}
+        else:
+            followers_list = set()
+            print(f"[{self.username}]: Uyarı: Takipçi dosyasında 'string_list_data' anahtarı bulunamadı.")
+
+        # Takip Edilenler: title alanı (kullanıcı adı) üzerinden set oluştur
+        if 'relationships_following' in following_raw_data:
+            following_temp_list = following_raw_data.get('relationships_following', [])
+            following_list = {item.get('title') for item in following_temp_list if item.get('title')}
+        else:
+            following_list = set()
+            print(f"[{self.username}]: Uyarı: Takip edilen dosyasında 'relationships_following' anahtarı bulunamadı.")
+
+
+        # 3. Toplam Sayıları Hesapla
+        total_followers = len(followers_list)
+        total_following = len(following_list)
+
+        # 4. Karşılıklı Takip Etmeyenleri Bul (Unfollowers/Not Following Back)
+        # Sizin takip edip (following), onların sizi takip etmediği (followers) kişiler
+        not_following_back = following_list - followers_list
+        unfollowers_count = len(not_following_back)
+        top_unfollower = next(iter(not_following_back), "Yok")
+        
+        # 5. Sonuçları Hazırla (Frontend'deki arayüze uyması için alan isimlerini kullanıyoruz)
+        self.analysis_results = {
+            "TakipçiSayısı": total_followers, 
+            "TakipEdilenSayısı": total_following, 
+            "GeriTakipEtmeyenSayısı": f"GT Yapmayan Sayısı: {unfollowers_count}", 
+            "İlkGeriTakipEtmeyen": f"İlk GT Yapmayan: {top_unfollower}" 
+        }
+        
+        print(f"[{self.username}]: Analiz Tamamlandı. Takipçi: {total_followers}, Takip Edilen: {total_following}, GT Yapmayan: {unfollowers_count}")
+        return self.analysis_results
+    
+    def cleanup(self):
+        """
+        İndirilen ZIP dosyasını ve çıkarılan klasörü temizler.
+        """
+        # Burada os.remove ve shutil.rmtree kullanılacak.
+        print(f"[{self.username}]: Temizlik işlemi başlıyor...")
+        # ZIP dosyasını sil
+        if os.path.exists(self.zip_path):
+            os.remove(self.zip_path)
+            print(f"[{self.username}]: ZIP dosyası silindi.")
+        
+        # Çıkarılan klasörü sil
+        if os.path.exists(self.extraction_path):
+            shutil.rmtree(self.extraction_path)
+            print(f"[{self.username}]: Ayıklanan klasör silindi.")
+        
+        print(f"[{self.username}]: Temizlik tamamlandı.")
+        # Temizlik şu an 'app.py' içinde çağrılmıyor. İsteğe bağlı olarak eklenebilir.
