@@ -1,6 +1,6 @@
 import json
 from flask import Flask, request, jsonify
-from .services.data_processor import DataProcessor 
+from .services.data_processor import DataProcessor # YENİ IMPORT
 from flask_cors import CORS
 
 app = Flask(__name__)
