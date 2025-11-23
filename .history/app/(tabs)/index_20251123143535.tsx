@@ -30,7 +30,7 @@ async function registerForPushNotificationsAsync() {
   // Uygulama ön planda olsa bile bildirimlerin gösterilmesini sağlar
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
-      //shouldShowAlert: true,
+      shouldShowAlert: true,
       shouldPlaySound: true,
       shouldSetBadge: false,
       shouldShowBanner: true, // Bildirimin üst banner'da gösterilip gösterilmeyeceği
