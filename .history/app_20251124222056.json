@@ -9,16 +9,11 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
-      "config": {
-        "googleMobileAdsAppId": "ca-app-pub-3940256099942544~1458002511"
-      }
-     
+      "supportsTablet": true
+      
     },
     "android": {
-      "config": {
-        "googleMobileAdsAppId": "ca-app-pub-3940256099942544~3347511713"
-      },
+
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -34,7 +29,7 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "@react-native-google-mobile-ads/babel-plugin",
+
       "expo-router",
       [
         "expo-splash-screen",

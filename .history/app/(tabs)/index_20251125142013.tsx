@@ -21,7 +21,7 @@ import { WebView } from "react-native-webview";
 import { AppBannerAd, useAdBasedAction } from "./ads";
 
 
-const BACKEND_URL = "https://insta-analyzer-4vi8.onrender.com";  
+const BACKEND_URL = "http://192.168.1.35:5000/analyze";  
 const ACCOUNTS_CENTER_DATA_URL = "https://accountscenter.instagram.com/info_and_permissions/dyi/?entry_point=deeplink_screen"; 
 
 
@@ -243,6 +243,7 @@ const validateUsername = () => {
     }
   }
 };
+
 
   useEffect(() => {
     if (appState === 'PROCESSING' && finalDataUrl) {

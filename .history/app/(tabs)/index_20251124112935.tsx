@@ -17,11 +17,11 @@ import {
 } from "react-native";
 import Feather from "react-native-vector-icons/Feather";
 import Icon from 'react-native-vector-icons/Ionicons';
+
 import { WebView } from "react-native-webview";
-import { AppBannerAd, useAdBasedAction } from "./ads";
 
 
-const BACKEND_URL = "https://insta-analyzer-4vi8.onrender.com";  
+const BACKEND_URL = "http://192.168.1.35:5000/analyze";  
 const ACCOUNTS_CENTER_DATA_URL = "https://accountscenter.instagram.com/info_and_permissions/dyi/?entry_point=deeplink_screen"; 
 
 
@@ -102,8 +102,7 @@ export default function App() {
   const [activeInfo, setActiveInfo] = useState<number | null>(null);
   const [activeAnalysis, setActiveAnalysis] = useState<number | null>(null);
   const [usernamesToShow, setUsernamesToShow] = useState<string[] | null>(null);
-  const { showAd, rewardGranted, resetReward, adLoaded, isLoading } = useAdBasedAction();
-
+  
 
 useEffect(() => {
     registerForPushNotificationsAsync();
@@ -231,19 +230,6 @@ const validateUsername = () => {
       setAppState('HOME'); 
   }
 
-  const handleStartRequestWithAd = () => {
-  const success = showAd();   // Reklam yüklüyse göster
-  if (!success) {
-    handleStartDownloadWebView();     // reklam yoksa işlemi direkt yap
-  } else {
-    // Reklam izlendikten sonra işlem başlar
-    if (rewardGranted) {
-      resetReward();
-      handleStartDownloadWebView();
-    }
-  }
-};
-
   useEffect(() => {
     if (appState === 'PROCESSING' && finalDataUrl) {
 
@@ -340,7 +326,6 @@ const validateUsername = () => {
               ];
         return (
       <ScrollView style={styles.pageContent}> 
-      <AppBannerAd />
         <View style={styles.container}>
           <Text style={styles.sectionTitle}>Veri Yönetimi</Text>
           <View style={styles.inputSection}>
@@ -419,8 +404,7 @@ haline getirir.</Text>
             title="Verileri Yükle" 
             onPress={() => {
               if (!validateUsername()) return;
-              handleStartRequestWithAd();
-              //handleStartDownloadWebView();
+              handleStartDownloadWebView();
             }} 
             color="#0927eb" />
            </View>
@@ -477,7 +461,7 @@ haline getirir.</Text>
               style={styles.infoButtonWebView} 
               onPress={() => setActiveInfo(1)} // 1. Adım bilgisini göster
           >
-              <Feather name="help-circle" size={22} color="#0927eb" />
+              <Feather name="info" size={22} color="#0927eb" />
           </TouchableOpacity>
           </View>
         </View>
@@ -506,7 +490,7 @@ haline getirir.</Text>
               style={styles.infoButtonWebView} 
               onPress={() => setActiveInfo(3)} // 3. Adım bilgisini göster
           >
-              <Feather name="help-circle" size={22} color="#0927eb" />
+              <Feather name="info" size={22} color="#0927eb" />
           </TouchableOpacity>
             
             </View>
