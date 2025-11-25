@@ -13,6 +13,7 @@
       "config": {
         "googleMobileAdsAppId": "ca-app-pub-3940256099942544~1458002511"
       }
+     
     },
     "android": {
       "config": {
@@ -50,12 +51,6 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    },
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "d5adb722-afdf-480e-aa2b-9028feaba75a"
-      }
     }
   }
 }
