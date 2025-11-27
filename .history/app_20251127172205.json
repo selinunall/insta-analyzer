@@ -20,21 +20,21 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.instadataapp"
-      
+      "package": "com.anonymous.instadataapp",
+       "config": {
+        "googleMobileAdsAppId": "ca-app-pub-9138768479487019~4941169205"
+      }
     },
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-       [
-        "react-native-google-mobile-ads",
-        {
-          "androidAppId": "ca-app-pub-9138768479487019~4941169205",
-          "iosAppId": "ca-app-pub-9138768479487019~9918163714"
-        }
-      ],
+      "react-native-google-mobile-ads",
+      {
+        "androidAppId": "ca-app-pub-9138768479487019~4941169205",
+        "iosAppId": "ca-app-pub-9138768479487019~9918163714"
+      },
       "expo-router",
       [
         "expo-splash-screen",

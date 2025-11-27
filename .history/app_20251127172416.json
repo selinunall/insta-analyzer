@@ -20,8 +20,10 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.instadataapp"
-      
+      "package": "com.anonymous.instadataapp",
+       "config": {
+        "googleMobileAdsAppId": "ca-app-pub-9138768479487019~4941169205"
+      }
     },
     "web": {
       "output": "static",
