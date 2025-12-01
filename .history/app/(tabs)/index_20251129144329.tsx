@@ -234,8 +234,7 @@ const validateUsername = () => {
   const handleStartRequestWithAd = () => {
   const success = showAd();   // Reklam yüklüyse göster
   if (!success) {
-    //handleStartDownloadWebView();
-    handleStartRequest();     // reklam yoksa işlemi direkt yap
+    handleStartDownloadWebView();     // reklam yoksa işlemi direkt yap
   } else {
     // Reklam izlendikten sonra işlem başlar
     if (rewardGranted) {
@@ -377,8 +376,8 @@ haline getirir.</Text>
                title="Veri Talep Et" 
                onPress={() => {
                   if (!validateUsername()) return;
+                  handleStartRequestWithAd
                   //handleStartRequest();
-                  handleStartRequestWithAd();
                   }} 
                 color="#0927eb"/>         
                </View>
@@ -698,7 +697,7 @@ haline getirir.</Text>
   
   const renderHeader = () => (
     <View style={styles.headerContainer}>
-      <Text style={styles.headerTitle}>FollowLab</Text>
+      <Text style={styles.headerTitle}>Followly</Text>
       <View style={{ width: 28 }} />
     </View>
   );

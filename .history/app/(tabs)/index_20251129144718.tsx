@@ -698,7 +698,7 @@ haline getirir.</Text>
   
   const renderHeader = () => (
     <View style={styles.headerContainer}>
-      <Text style={styles.headerTitle}>FollowLab</Text>
+      <Text style={styles.headerTitle}>Followly</Text>
       <View style={{ width: 28 }} />
     </View>
   );
